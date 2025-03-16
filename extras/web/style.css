@@ -1,0 +1,118 @@
+.nav, .body, footer, #gen_mqtt_id {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+
+label:has(input[type=radio]) {
+  gap: 1rem;
+  border: 1px solid #aaa;
+  padding: 1rem 1.5rem;
+  transition: background-color 0.3s;
+}
+
+label:has(input[type=radio]:not(:disabled)) {
+  cursor: pointer;
+}
+
+input[type=radio] {
+  appearance: none;
+  flex: 0 0 auto;
+}
+
+label:has(input[type=radio]:checked) {
+  border-color: #39B54A;
+  background-color: #39B54A;
+  color: #fff;
+}
+
+.tab,
+.message {
+  margin: 20px;
+  border-radius: 5px;
+  border: 2px solid #cdcdcd;
+  background-color: #fff;
+  padding: 20px;
+  max-width: 420px;
+}
+footer {
+  margin: 20px;
+  padding: 20px;
+}
+
+input[type=text],
+input[type=number],
+input[type=password],
+input[type=file] {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input[type=file]::file-selector-button {
+  background-color: #39B54A;
+  color: white;
+  padding: 1px 4px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type=button] {
+  width: 100%;
+  background-color: #39B54A;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type=button]:hover, label:has([type=radio]:hover) {
+  background-color: #39b588;
+}
+
+label:has(input[type=text]) {
+  width: 100%;
+}
+
+#mqtt_id {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#gen_mqtt_id {
+  max-height: 43px;
+  max-width: 43px;
+  width: 100%;
+  padding: 10px 10px;
+  margin: 0 0 8px 0;
+  background-color: #39B54A;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #DDD;
+}
+
+tr:has(td:hover) {background-color: #D6EEEE;}
+tr:has(td:active) {background-color: #39B54A;}

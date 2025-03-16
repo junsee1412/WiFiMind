@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Device</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="nav">
+    <label><input type="radio" name="tab" value="MQTT" checked>MQTT</label>
+    <label><input type="radio" name="tab" value="WiFi">WiFi</label>
+    <label><input type="radio" name="tab" value="Firmware">Firmware</label>
+  </div>
+  <div class="body">
+    <div>
+      <div class="MQTT tab">
+        <label for="mqtt_host">MQTT Host</label>
+        <input id="mqtt_host" type="text" />
+        <label for="mqtt_port">MQTT Port</label>
+        <input id="mqtt_port" type="number" />
+        <label for="mqtt_id">MQTT Client ID</label>
+        <input id="mqtt_id" type="text" />
+        <button id="gen_mqtt_id">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-linecap="round" stroke-linejoin="round" width="24" height="24" stroke-width="2">
+            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"></path>
+            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"></path>
+          </svg>
+        </button>
+        <label for="mqtt_token">MQTT Username</label>
+        <input id="mqtt_token" type="text" />
+        <label for="mqtt_pass">MQTT Password</label>
+        <input id="mqtt_pass" type="text" />
+        <label for="tele_interval">Telemetry Interval</label>
+        <input id="tele_interval" type="number" />
+        <label for="attr_interval">Attribute Interval</label>
+        <input id="attr_interval" type="number" />
+        <input id="save_config" type="button" value="Submit">
+      </div>
+      <div class="WiFi tab" style="display: none;">
+        <table id="wifi_list">
+        </table>
+        <label for="esp_wifi">SSID:</label>
+        <input id="esp_wifi" type="text">
+        <label for="esp_pass">PASS:</label>
+        <input id="esp_pass" type="password">
+        <input type="checkbox" name="show_pass" id="show_pass">
+        <label for="show_pass">Show Password</label>
+        <input id="submit_wifi" type="button" value="Submit">
+      </div>
+      <div class="Firmware tab" style="display: none;">
+        <label for="esp_firmware">Upload new firmware:</label>
+        <input id="esp_firmware" type="file" accept=".bin,application/octet-stream">
+        <input id="submit_firmware" type="button" value="Submit" style="display: none;">
+      </div>
+      <!-- <p class="message">Status: <span id="status"></span></p> -->
+      <p class="message">Message: <span id="message"></span></p>
+    </div>
+  </div>
+  <footer>
+    <div>
+      <input id="exit" type="button" value="Exit">
+      <input id="restart" type="button" value="Restart">
+      <input id="erase" type="button" value="Erase">
+    </div>
+  </footer>
+</body>
+<script src="script.js"></script>
+
+</html>

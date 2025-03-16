@@ -1,0 +1,21 @@
+{
+  "name": "WiFiMind",
+  "version": "0.0.1",
+  "keywords": "wifi,wi-fi,esp,esp8266,esp32,espressif8266,espressif32,nodemcu,wemos,amebad",
+  "description": "WiFi Configuration manager with web configuration portal for ESP boards",
+  "authors":
+  [
+    {
+        "name": "junsee1412",
+        "url": "https://github.com/junsee1412",
+        "maintainer": true
+    }
+  ],
+  "frameworks": "arduino",
+  "platforms": 
+  [
+    "espressif8266",
+    "espressif32",
+    "amebad"
+  ]
+}
