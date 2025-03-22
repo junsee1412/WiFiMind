@@ -16,7 +16,6 @@ extern "C"
 #define WM_WIFIOPEN ENC_TYPE_NONE
 #endif
 
-#include <EEPROM.h>
 #include <DNSServer.h>
 #include <memory>
 const char * const AUTH_MODE_NAMES[] PROGMEM
@@ -32,9 +31,9 @@ const char * const AUTH_MODE_NAMES[] PROGMEM
     "WPA_WPA2_PSK", // 8 ENC_TYPE_AUTO
 };
 
-struct MindConfig {
+struct Config {
     char mqtt_host[32];
-    char mqtt_token[32];
+    char mqtt_user[32];
     char mqtt_id[32];
     char mqtt_pass[32];
     uint16_t mqtt_port, tele_interval, attr_interval;
@@ -87,19 +86,7 @@ public:
     // check if web portal is active (true)
     bool            getWebPortalActive();
 
-    char*           getMqttHost();
-
-    uint16_t        getMqttPort();
-
-    String          getMqttToken();
-
-    String          getMqttID();
-
-    String          getMqttPassword();
-
-    uint16_t         getTelemetryInterval();
-
-    uint16_t         getAttributeInterval();
+    Config          getConfig();
     
     boolean         _preloadwifiscan        = false; // preload wifiscan if true
     unsigned int    _scancachetime          = 30000; // ms cache time for preload scans
@@ -180,7 +167,7 @@ private:
 
     String          _mqtthost               = "";
     String          _mqttport               = "";
-    String          _mqtttoken              = "";
+    String          _mqttuser               = "";
     String          _mqttid                 = "";
     String          _mqttpassword           = "";
     String          _teleinterval           = "";
@@ -212,19 +199,23 @@ private:
     String          getScanItemOut();
     String          WiFi_SSID(bool persistent = true) const;
     // String          WiFi_psk(bool persistent = true) const;
-    MindConfig      mind_config;
+    Config          mind_config;
+    void            loadConfiguration(const char *filename, Config &config);
+    bool            saveConfiguration(const char *filename, Config &config);
 
 public:
     // Notification OTA callbacks
     void onOTAStart(std::function<void()> cbOnStart)                { _cbOTAStart = cbOnStart; }
     void onOTAEnd(std::function<void()> cbOnEnd)                    { _cbOTAEnd = cbOnEnd; }
     void onOTAError(std::function<void(int)> cbOnError)             { _cbOTAError = cbOnError; }
+    void onConfigPortal(std::function<void(bool)> cbConfigPortal)       { _cbConfigPortal = cbConfigPortal; }
 
 private:
     // OTA Callbacks
     std::function<void()>           _cbOTAStart;
     std::function<void()>           _cbOTAEnd;
     std::function<void(int)>        _cbOTAError;
+    std::function<void(bool)>       _cbConfigPortal;
 };
 
 #endif

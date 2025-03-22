@@ -10,6 +10,11 @@
 #define DEVICE_RPC_TOPIC_REQUEST "v1/devices/me/rpc/request/"
 #define DEVICE_RPC_TOPIC_RESPONSE "v1/devices/me/rpc/response/"
 
+// DEVICE JSON CONFIG 
+#define WRITE_FILE "w"
+#define READ_FILE "r"
+#define CONFIG_FILE_PATH "/config.json"
+
 // HTTP CONFIG
 #define PATH_ROOT "/"
 #define PATH_EXIT "/exit"
@@ -33,7 +38,7 @@
 #define PATH_CONFIGSAVE "/configsave"
 #define HOST_PARAM_CONFIGSAVE "mqtt_host"
 #define PORT_PARAM_CONFIGSAVE "mqtt_port"
-#define TOKEN_PARAM_CONFIGSAVE "mqtt_token"
+#define USER_PARAM_CONFIGSAVE "mqtt_user"
 #define ID_PARAM_CONFIGSAVE "mqtt_id"
 #define PASS_PARAM_CONFIGSAVE "mqtt_pass"
 #define TELEINT_PARAM_CONFIGSAVE "tele_interval"

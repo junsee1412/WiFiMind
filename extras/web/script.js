@@ -7,7 +7,7 @@ const message_con = document.getElementsByClassName("message")[0];
 
 const mqtt_host = document.getElementById("mqtt_host");
 const mqtt_port = document.getElementById("mqtt_port");
-const mqtt_token = document.getElementById("mqtt_token");
+const mqtt_user = document.getElementById("mqtt_user");
 const mqtt_id = document.getElementById("mqtt_id");
 const mqtt_pass = document.getElementById("mqtt_pass");
 const tele_interval = document.getElementById("tele_interval");
@@ -53,7 +53,7 @@ const getMqttConfig = () => {
   }).then((data) => {
     mqtt_host.value = data.mqtt_host;
     mqtt_port.value = data.mqtt_port;
-    mqtt_token.value = data.mqtt_token;
+    mqtt_user.value = data.mqtt_user;
     mqtt_id.value = data.mqtt_id;
     mqtt_pass.value = data.mqtt_pass;
     tele_interval.value = data.tele_interval;
@@ -105,7 +105,7 @@ save_config.onclick = () => {
   const queryParams = new URLSearchParams();
   queryParams.append("mqtt_host", mqtt_host.value);
   queryParams.append("mqtt_port", mqtt_port.value);
-  queryParams.append("mqtt_token", mqtt_token.value);
+  queryParams.append("mqtt_user", mqtt_user.value);
   queryParams.append("mqtt_id", mqtt_id.value);
   queryParams.append("mqtt_pass", mqtt_pass.value);
   queryParams.append("tele_interval", tele_interval.value);

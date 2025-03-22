@@ -2,6 +2,8 @@
 #if defined(ESP8266) || defined(ESP32)
 #include "const_string.h"
 #include "index.h"
+#include <LittleFS.h>
+#include <ArduinoJson.h>
 
 void WiFiMind::_begin()
 {
@@ -17,39 +19,9 @@ void WiFiMind::_end()
         WiFi.persistent(true);
 }
 
-char *WiFiMind::getMqttHost()
+Config WiFiMind::getConfig()
 {
-    return mind_config.mqtt_host;
-}
-
-uint16_t WiFiMind::getMqttPort()
-{
-    return mind_config.mqtt_port;
-}
-
-String WiFiMind::getMqttToken()
-{
-    return String(mind_config.mqtt_token);
-}
-
-String WiFiMind::getMqttID()
-{
-    return String(mind_config.mqtt_id);
-}
-
-String WiFiMind::getMqttPassword()
-{
-    return String(mind_config.mqtt_pass);
-}
-
-uint16_t WiFiMind::getTelemetryInterval()
-{
-    return mind_config.tele_interval;
-}
-
-uint16_t WiFiMind::getAttributeInterval()
-{
-    return mind_config.attr_interval;
+    return mind_config;
 }
 
 void WiFiMind::updateConxResult(uint8_t status)
@@ -291,9 +263,7 @@ bool WiFiMind::WiFi_Mode(WiFiMode_t m, bool persistent)
 
 WiFiMind::WiFiMind()
 {
-    EEPROM.begin(512);
-    EEPROM.get(0, mind_config);
-    EEPROM.end();
+    loadConfiguration(CONFIG_FILE_PATH, mind_config);
 }
 
 WiFiMind::~WiFiMind()
@@ -359,6 +329,11 @@ boolean WiFiMind::startConfigPortal(char const *apName, char const *apPassword)
     startAP();
     setupConfigPortal();
     setupDNSD();
+
+    if (_cbConfigPortal)
+    {
+        _cbConfigPortal(true);
+    }
 
     while (1)
     {
@@ -809,7 +784,7 @@ void WiFiMind::handleConfigInfo()
         "{\"%s\":\"%s\",\"%s\":%u,\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":%u,\"%s\":%u}",
         HOST_PARAM_CONFIGSAVE, mind_config.mqtt_host,
         PORT_PARAM_CONFIGSAVE, mind_config.mqtt_port,
-        TOKEN_PARAM_CONFIGSAVE, mind_config.mqtt_token,
+        USER_PARAM_CONFIGSAVE, mind_config.mqtt_user,
         ID_PARAM_CONFIGSAVE, mind_config.mqtt_id,
         PASS_PARAM_CONFIGSAVE, mind_config.mqtt_pass,
         TELEINT_PARAM_CONFIGSAVE, mind_config.tele_interval,
@@ -825,13 +800,13 @@ void WiFiMind::handleConfigSave()
     handleRequest();
     _mqtthost = server->arg(F(HOST_PARAM_CONFIGSAVE)).c_str();
     _mqttport = server->arg(F(PORT_PARAM_CONFIGSAVE)).c_str();
-    _mqtttoken = server->arg(F(TOKEN_PARAM_CONFIGSAVE)).c_str();
+    _mqttuser = server->arg(F(USER_PARAM_CONFIGSAVE)).c_str();
     _mqttid = server->arg(F(ID_PARAM_CONFIGSAVE)).c_str();
     _mqttpassword = server->arg(F(PASS_PARAM_CONFIGSAVE)).c_str();
     _teleinterval = server->arg(F(TELEINT_PARAM_CONFIGSAVE)).c_str();
     _attrinterval = server->arg(F(ATTRINT_PARAM_CONFIGSAVE)).c_str();
 
-    if (_mqtthost == "" || _mqttport == "" || _mqtttoken == "" ||
+    if (_mqtthost == "" || _mqttport == "" || _mqttuser == "" ||
         _mqttid == "" || _teleinterval == "" || _attrinterval == "")
     {
         server->send(400, "application/json", F("{\"message\":\"SOME FIELDS ARE EMPTY\"}"));
@@ -839,7 +814,7 @@ void WiFiMind::handleConfigSave()
     }
 
     strncpy(mind_config.mqtt_host, _mqtthost.c_str(), 32);
-    strncpy(mind_config.mqtt_token, _mqtttoken.c_str(), 32);
+    strncpy(mind_config.mqtt_user, _mqttuser.c_str(), 32);
     strncpy(mind_config.mqtt_id, _mqttid.c_str(), 32);
     strncpy(mind_config.mqtt_pass, _mqttpassword.c_str(), 32);
 
@@ -847,9 +822,7 @@ void WiFiMind::handleConfigSave()
     mind_config.tele_interval = (uint16_t)_teleinterval.toInt();
     mind_config.attr_interval = (uint16_t)_attrinterval.toInt();
 
-    EEPROM.begin(512);
-    EEPROM.put(0, mind_config);
-    if (EEPROM.commit())
+    if (saveConfiguration(CONFIG_FILE_PATH, mind_config))
     {
         server->send(200, "application/json", F("{\"message\":\"Settings saved\"}"));
     }
@@ -857,7 +830,6 @@ void WiFiMind::handleConfigSave()
     {
         server->send(400, "application/json", F("{\"message\":\"Save error\"}"));
     }
-    EEPROM.end();
 }
 
 /**
@@ -966,6 +938,98 @@ void WiFiMind::handleUpdateDone()
     {
         ESP.restart();
     }
+}
+
+void WiFiMind::loadConfiguration(const char *filename, Config &config)
+{
+    if (!LittleFS.begin())
+    {
+        Serial.println(F("LittleFS mount failed"));
+        return;
+    }
+    // Open file for reading
+    File file = LittleFS.open(filename, READ_FILE);
+
+    // Allocate a temporary JsonDocument
+    JsonDocument doc;
+
+    // Deserialize the JSON document
+    DeserializationError error = deserializeJson(doc, file);
+    if (error){
+        Serial.println(F("Failed to read file"));
+    }
+
+    // Copy values from the JsonDocument to the Config
+    strlcpy(mind_config.mqtt_host,
+            doc[F("host")] | "",
+            sizeof(mind_config.mqtt_host));
+    mind_config.mqtt_port = doc[F("port")] | 1883;
+    strlcpy(mind_config.mqtt_id,
+            doc[F("id")] | "",
+            sizeof(mind_config.mqtt_id));
+    strlcpy(mind_config.mqtt_user,
+            doc[F("user")] | "",
+            sizeof(mind_config.mqtt_user));
+    strlcpy(mind_config.mqtt_pass,
+            doc[F("pass")] | "",
+            sizeof(mind_config.mqtt_pass));
+    mind_config.attr_interval = doc[F("attr")] | 5;
+    mind_config.tele_interval = doc[F("tele")] | 300;
+
+    // Close the file (Curiously, File's destructor doesn't close the file)
+    file.close();
+    LittleFS.end();
+}
+
+bool WiFiMind::saveConfiguration(const char *filename, Config &config)
+{
+    bool saved = true;
+    if (!LittleFS.begin())
+    {
+        Serial.println(F("LittleFS mount failed"));
+        return false;
+    }
+    // Delete existing file, otherwise the configuration is appended to the file
+    if (LittleFS.remove(filename))
+    {
+        Serial.println(F("File deleted"));
+    }
+    else
+    {
+        Serial.println(F("Delete failed"));
+    }
+
+    // Open file for writing
+    File file = LittleFS.open(filename, WRITE_FILE);
+    if (!file)
+    {
+        Serial.println(F("Failed to create file"));
+        return false;
+    }
+
+    // Allocate a temporary JsonDocument
+    JsonDocument doc;
+
+    // Set the values in the document
+    doc["host"] = mind_config.mqtt_host;
+    doc["port"] = mind_config.mqtt_port;
+    doc["id"] = mind_config.mqtt_id;
+    doc["user"] = mind_config.mqtt_user;
+    doc["pass"] = mind_config.mqtt_pass;
+    doc["attr"] = mind_config.attr_interval;
+    doc["tele"] = mind_config.tele_interval;
+    // Serialize JSON to file
+    if (serializeJson(doc, file) == 0)
+    {
+        saved = false;
+        Serial.println(F("Failed to write to file"));
+    }
+
+    // Close the file
+    file.close();
+    LittleFS.end();
+
+    return saved;
 }
 
 #endif
