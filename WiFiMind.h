@@ -83,6 +83,9 @@ public:
     // erase wifi credentials
     void            resetSettings();
 
+    // set allow exit web portal
+    void            setWebPortalAllowExit(bool allow);
+
     // check if web portal is active (true)
     bool            getWebPortalActive();
 
@@ -208,7 +211,8 @@ public:
     void onOTAStart(std::function<void()> cbOnStart)                { _cbOTAStart = cbOnStart; }
     void onOTAEnd(std::function<void()> cbOnEnd)                    { _cbOTAEnd = cbOnEnd; }
     void onOTAError(std::function<void(int)> cbOnError)             { _cbOTAError = cbOnError; }
-    void onConfigPortal(std::function<void(bool)> cbConfigPortal)       { _cbConfigPortal = cbConfigPortal; }
+    void onConfigPortal(std::function<void(bool)> cbConfigPortal)   { _cbConfigPortal = cbConfigPortal; }
+    void onSavedConfig(std::function<void()> cbSavedConfig)         { _cbSavedConfig = cbSavedConfig; }
 
 private:
     // OTA Callbacks
@@ -216,6 +220,7 @@ private:
     std::function<void()>           _cbOTAEnd;
     std::function<void(int)>        _cbOTAError;
     std::function<void(bool)>       _cbConfigPortal;
+    std::function<void()>           _cbSavedConfig;
 };
 
 #endif

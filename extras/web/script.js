@@ -154,6 +154,7 @@ esp_firmware.onchange = () => {
 }
 
 submit_firmware.onclick = async () => {
+  submit_firmware.disabled = true;
   const data = new FormData();
   data.append('update', esp_firmware.files[0])
   await fetch(`http://${HOST_IP}/update`, {
@@ -166,6 +167,9 @@ submit_firmware.onclick = async () => {
     return response.json();
   }).then((data) => {
     // console.log(data);
+    esp_firmware.value = null;
+    submit_firmware.disabled = false;
+    submit_firmware.style.display = "none";
     message.innerText = data.message;
   });
 }

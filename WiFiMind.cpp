@@ -21,6 +21,7 @@ void WiFiMind::_end()
 
 Config WiFiMind::getConfig()
 {
+    loadConfiguration(CONFIG_FILE_PATH, mind_config);
     return mind_config;
 }
 
@@ -263,7 +264,6 @@ bool WiFiMind::WiFi_Mode(WiFiMode_t m, bool persistent)
 
 WiFiMind::WiFiMind()
 {
-    loadConfiguration(CONFIG_FILE_PATH, mind_config);
 }
 
 WiFiMind::~WiFiMind()
@@ -449,7 +449,7 @@ void WiFiMind::stopWebPortal()
 
 boolean WiFiMind::configPortalHasTimeout()
 {
-    if (!webPortalActive)
+    if (!configPortalActive)
         return false;
 
     // handle timeout portal client check
@@ -480,6 +480,11 @@ bool WiFiMind::stopConfigPortal()
         return true;
     }
     return shutdownConfigPortal();
+}
+
+void WiFiMind::setWebPortalAllowExit(bool allow)
+{
+    _allowExit = allow;
 }
 
 void WiFiMind::resetSettings()
@@ -779,6 +784,7 @@ void WiFiMind::handleConfigInfo()
 {
     char message[256];
     handleRequest();
+    getConfig();
     sprintf(
         message,
         "{\"%s\":\"%s\",\"%s\":%u,\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":%u,\"%s\":%u}",
@@ -825,6 +831,10 @@ void WiFiMind::handleConfigSave()
     if (saveConfiguration(CONFIG_FILE_PATH, mind_config))
     {
         server->send(200, "application/json", F("{\"message\":\"Settings saved\"}"));
+        if (_cbSavedConfig)
+        {
+            _cbSavedConfig();
+        }
     }
     else
     {
