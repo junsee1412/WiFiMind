@@ -14,6 +14,54 @@ extern "C"
 
 #define WIFI_getChipId() ESP.getChipId()
 #define WM_WIFIOPEN ENC_TYPE_NONE
+
+#elif defined(ESP32)
+
+    #include <WiFi.h>
+    #include <esp_wifi.h>  
+    #include <Update.h>
+    
+    #define WIFI_getChipId() (uint32_t)ESP.getEfuseMac()
+    #define WM_WIFIOPEN   WIFI_AUTH_OPEN
+
+    #ifndef WEBSERVER_H
+        #ifdef WM_WEBSERVERSHIM
+            #include <WebServer.h>
+        #else
+            #include <ESP8266WebServer.h>
+            // Forthcoming official ? probably never happening
+            // https://github.com/esp8266/ESPWebServer
+        #endif
+    #endif
+
+    #ifdef WM_ERASE_NVS
+       #include <nvs.h>
+       #include <nvs_flash.h>
+    #endif
+
+    #ifdef WM_MDNS
+        #include <ESPmDNS.h>
+    #endif
+
+    #ifdef WM_RTC
+        #ifdef ESP_IDF_VERSION_MAJOR // IDF 4+
+        #if CONFIG_IDF_TARGET_ESP32 // ESP32/PICO-D4
+        #include "esp32/rom/rtc.h"
+        #elif CONFIG_IDF_TARGET_ESP32S2
+        #include "esp32s2/rom/rtc.h"
+        #elif CONFIG_IDF_TARGET_ESP32C3
+        #include "esp32c3/rom/rtc.h"
+        #elif CONFIG_IDF_TARGET_ESP32S3
+        #include "esp32s3/rom/rtc.h"
+        #else
+        #error Target CONFIG_IDF_TARGET is not supported
+        #endif
+        #else // ESP32 Before IDF 4.0
+        #include "rom/rtc.h"
+        #endif
+    #endif
+
+#else
 #endif
 
 #include <EEPROM.h>
@@ -32,7 +80,7 @@ const char * const AUTH_MODE_NAMES[] PROGMEM
     "WPA_WPA2_PSK", // 8 ENC_TYPE_AUTO
 };
 
-struct MindConfig {
+struct Config {
     char mqtt_host[32];
     char mqtt_token[32];
     char mqtt_id[32];
@@ -87,30 +135,30 @@ public:
     // check if web portal is active (true)
     bool            getWebPortalActive();
 
-    char*           getMqttHost();
-
-    uint16_t        getMqttPort();
-
-    String          getMqttToken();
-
-    String          getMqttID();
-
-    String          getMqttPassword();
-
-    uint16_t         getTelemetryInterval();
-
-    uint16_t         getAttributeInterval();
+    Config          getConfig();
     
     boolean         _preloadwifiscan        = false; // preload wifiscan if true
     unsigned int    _scancachetime          = 30000; // ms cache time for preload scans
     boolean         _asyncScan              = false; // perform wifi network scan async
 
     std::unique_ptr<DNSServer>          dnsServer;
-    std::unique_ptr<ESP8266WebServer>   server;
+
+#if defined(ESP32) && defined(WM_WEBSERVERSHIM)
+    using WM_WebServer = WebServer;
+#else
+    using WM_WebServer = ESP8266WebServer;
+#endif
+
+    std::unique_ptr<WM_WebServer>   server;
 private:
-    #ifndef WL_STATION_WRONG_PASSWORD
+#ifndef WL_STATION_WRONG_PASSWORD
     uint8_t WL_STATION_WRONG_PASSWORD       = 7; // @kludge define a WL status for wrong password
-    #endif
+#endif
+
+#ifdef ESP32
+    wifi_event_id_t wm_event_id             = 0;
+    static uint8_t  _lastconxresulttmp; // tmp var for esp32 callback
+#endif
     
     uint8_t         _lastconxresult         = WL_IDLE_STATUS; // store last result when doing connect operations
     unsigned long   _configPortalStart      = 0; // ms config portal start time (updated for timeouts)
@@ -214,6 +262,40 @@ private:
     // String          WiFi_psk(bool persistent = true) const;
     MindConfig      mind_config;
 
+#ifdef ESP32
+
+// check for arduino or system event system, handle esp32 arduino v2 and IDF
+#if defined(ESP_ARDUINO_VERSION) && defined(ESP_ARDUINO_VERSION_VAL)
+
+    #define WM_ARDUINOVERCHECK ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0)
+    #define WM_ARDUINOVERCHECK_204 ESP_ARDUINO_VERSION <= ESP_ARDUINO_VERSION_VAL(2, 0, 5)
+
+    #ifdef WM_ARDUINOVERCHECK
+        #define WM_ARDUINOEVENTS
+    #else
+        #define WM_NOSOFTAPSSID
+        #define WM_NOCOUNTRY
+    #endif
+
+    #ifdef WM_ARDUINOVERCHECK_204
+        #define WM_DISCONWORKAROUND
+    #endif
+
+#else 
+    #define WM_NOCOUNTRY
+#endif
+
+#ifdef WM_NOCOUNTRY
+    #warning "ESP32 set country unavailable" 
+#endif
+
+
+#ifdef WM_ARDUINOEVENTS
+    void   WiFiEvent(WiFiEvent_t event, arduino_event_info_t info);
+#else
+    void   WiFiEvent(WiFiEvent_t event, system_event_info_t info);
+#endif
+#endif
 public:
     // Notification OTA callbacks
     void onOTAStart(std::function<void()> cbOnStart)                { _cbOTAStart = cbOnStart; }

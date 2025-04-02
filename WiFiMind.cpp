@@ -3,11 +3,19 @@
 #include "const_string.h"
 #include "index.h"
 
+#ifdef ESP32
+uint8_t WiFiManager::_lastconxresulttmp = WL_IDLE_STATUS;
+#endif
+
 void WiFiMind::_begin()
 {
     if (_hasBegun)
         return;
     _hasBegun = true;
+
+#ifndef ESP32
+    WiFi.persistent(false); // disable persistent so scannetworks and mode switching do not cause overwrites
+#endif
 }
 
 void WiFiMind::_end()
@@ -17,39 +25,12 @@ void WiFiMind::_end()
         WiFi.persistent(true);
 }
 
-char *WiFiMind::getMqttHost()
+Config WiFiMind::getConfig()
 {
-    return mind_config.mqtt_host;
-}
-
-uint16_t WiFiMind::getMqttPort()
-{
-    return mind_config.mqtt_port;
-}
-
-String WiFiMind::getMqttToken()
-{
-    return String(mind_config.mqtt_token);
-}
-
-String WiFiMind::getMqttID()
-{
-    return String(mind_config.mqtt_id);
-}
-
-String WiFiMind::getMqttPassword()
-{
-    return String(mind_config.mqtt_pass);
-}
-
-uint16_t WiFiMind::getTelemetryInterval()
-{
-    return mind_config.tele_interval;
-}
-
-uint16_t WiFiMind::getAttributeInterval()
-{
-    return mind_config.attr_interval;
+    EEPROM.begin(512);
+    EEPROM.get(0, mind_config);
+    EEPROM.end();
+    return mind_config;
 }
 
 void WiFiMind::updateConxResult(uint8_t status)
@@ -217,6 +198,24 @@ String WiFiMind::WiFi_SSID(bool persistent) const
 boolean WiFiMind::autoConnect(char const *apName, char const *apPassword)
 {
     bool wifiIsSaved = true;
+
+#ifdef ESP32
+    if (_hostname != "")
+    {
+        // disable wifi if already on
+        if (WiFi.getMode() & WIFI_STA)
+        {
+            WiFi.mode(WIFI_OFF);
+            int timeout = millis() + 1200;
+            // async loop for mode change
+            while (WiFi.getMode() != WIFI_OFF && millis() < timeout)
+            {
+                delay(0);
+            }
+        }
+    }
+#endif
+
     if (wifiIsSaved)
     {
         _startconn = millis();
@@ -228,9 +227,18 @@ boolean WiFiMind::autoConnect(char const *apName, char const *apPassword)
         }
     }
 
+#ifdef ESP32
+    if (esp32persistent)
+        WiFi.persistent(false); // disable persistent for esp32 after esp_wifi_start or else saves wont work
+#endif
+
     WiFi_autoReconnect();
     // WiFi.hostname(HOSTNAME);
 
+    #ifdef ESP8266
+    if(_hostname != ""){
+    }
+    #endif
     bool connected = false;
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -291,14 +299,16 @@ bool WiFiMind::WiFi_Mode(WiFiMode_t m, bool persistent)
 
 WiFiMind::WiFiMind()
 {
-    EEPROM.begin(512);
-    EEPROM.get(0, mind_config);
-    EEPROM.end();
 }
 
 WiFiMind::~WiFiMind()
 {
     _end();
+// remove event
+// WiFi.onEvent(std::bind(&WiFiManager::WiFiEvent,this,_1,_2));
+#ifdef ESP32
+    WiFi.removeEvent(wm_event_id);
+#endif
 }
 
 // CONFIG PORTAL
@@ -803,6 +813,7 @@ void WiFiMind::handleRoot()
 void WiFiMind::handleConfigInfo()
 {
     char message[256];
+    getConfig();
     handleRequest();
     sprintf(
         message,
