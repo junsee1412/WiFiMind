@@ -23,8 +23,11 @@
  */
 #define PATH_UPDATE "/update"
 
+// HTTP CONFIG
 #define JSONTYPE "application/json"
+#define FILEDOWNLOADTYPE "application/octet-stream"
 
+// ESP CONFIG
 const char *const WIFI_STA_STATUS[] PROGMEM{
     "WL_IDLE_STATUS",           // 0 STATION_IDLE
     "WL_NO_SSID_AVAIL",         // 1 STATION_NO_AP_FOUND

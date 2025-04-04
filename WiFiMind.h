@@ -57,6 +57,7 @@ extern "C"
 
 #include <DNSServer.h>
 #include <memory>
+#include "const_string.h"
 
 class WiFiMind
 {

@@ -1,6 +1,6 @@
 #include "WiFiMind.h"
 #if defined(ESP8266) || defined(ESP32)
-#include "const_string.h"
+// #include "const_string.h"
 // #include "index.h"
 
 #ifdef ESP32
@@ -203,8 +203,8 @@ void WiFiMind::handleWifiSave()
     _ssid = server->arg(F(SSID_PARAM_WIFISAVE)).c_str();
     _pass = server->arg(F(PASS_PARAM_WIFISAVE)).c_str();
     server->send(200, JSONTYPE, F("{\"message\":\"OK\"}"));
-    if (webPortalActive)
-        webPortalActive = false;
+    // if (webPortalActive)
+    //     webPortalActive = false;
     connect = true; // signal ready to connect/reset process in processConfigPortal
 }
 
