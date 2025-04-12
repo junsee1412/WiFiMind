@@ -25,13 +25,13 @@ void WiFiMind::_end()
         WiFi.persistent(true);
 }
 
-Config WiFiMind::getConfig()
-{
-    EEPROM.begin(512);
-    EEPROM.get(0, mind_config);
-    EEPROM.end();
-    return mind_config;
-}
+// Config WiFiMind::getConfig()
+// {
+//     EEPROM.begin(512);
+//     EEPROM.get(0, mind_config);
+//     EEPROM.end();
+//     return mind_config;
+// }
 
 void WiFiMind::updateConxResult(uint8_t status)
 {
@@ -733,15 +733,18 @@ void WiFiMind::setupHTTPServer()
 {
     server.reset(new ESP8266WebServer(_httpPort));
     server->enableCORS(true);
+    if ( _webservercallback != NULL) {
+      _webservercallback(); // @CALLBACK
+    }
     server->on(PATH_WIFI, HTTP_GET, std::bind(&WiFiMind::handleWifi, this));
     server->on(PATH_WIFISAVE, HTTP_GET, std::bind(&WiFiMind::handleWifiSave, this));
-    server->on(PATH_CONFIGINFO, HTTP_GET, std::bind(&WiFiMind::handleConfigInfo, this));
-    server->on(PATH_CONFIGSAVE, HTTP_GET, std::bind(&WiFiMind::handleConfigSave, this));
     server->on(PATH_EXIT, HTTP_GET, std::bind(&WiFiMind::handleExit, this));
     server->on(PATH_RESTART, HTTP_GET, std::bind(&WiFiMind::handleRestart, this));
-    server->on(PATH_ROOT, HTTP_GET, std::bind(&WiFiMind::handleRoot, this));
     server->on(PATH_ERASE, HTTP_GET, std::bind(&WiFiMind::handleErase, this));
     server->onNotFound(std::bind(&WiFiMind::handleNotFound, this));
+    // server->on(PATH_CONFIGINFO, HTTP_GET, std::bind(&WiFiMind::handleConfigInfo, this));
+    // server->on(PATH_CONFIGSAVE, HTTP_GET, std::bind(&WiFiMind::handleConfigSave, this));
+    // server->on(PATH_ROOT, HTTP_GET, std::bind(&WiFiMind::handleRoot, this));
 
     server->on(PATH_UPDATE, HTTP_POST, std::bind(&WiFiMind::handleUpdateDone, this), std::bind(&WiFiMind::handleUpdate, this));
     server->begin();
@@ -797,7 +800,6 @@ void WiFiMind::handleExit()
 
 /**
  * HTTP ROOT
- **/
 void WiFiMind::handleRoot()
 {
     handleRequest();
@@ -806,10 +808,10 @@ void WiFiMind::handleRoot()
     server->sendHeader(F("Content-Encoding"), F("gzip"));
     server->send(200, "text/html", (const char *)index_html_gz, index_html_gz_len);
 }
+ **/
 
 /**
  * HTTP ROOT
- **/
 void WiFiMind::handleConfigInfo()
 {
     char message[256];
@@ -827,10 +829,10 @@ void WiFiMind::handleConfigInfo()
         ATTRINT_PARAM_CONFIGSAVE, mind_config.attr_interval);
     server->send(200, "application/json", message);
 }
+ **/
 
 /**
  * HTTP SAVE CONFIG
- **/
 void WiFiMind::handleConfigSave()
 {
     handleRequest();
@@ -870,6 +872,7 @@ void WiFiMind::handleConfigSave()
     }
     EEPROM.end();
 }
+ **/
 
 /**
  * HTTP save form and redirect to WLAN config page again
