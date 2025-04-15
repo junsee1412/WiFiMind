@@ -168,8 +168,9 @@ void WiFiMind::setupHTTPServer()
 void WiFiMind::handleRequest()
 {
     _webPortalAccessed = millis();
-    // bool testauth = false;
-    // if(!testauth) return;
+    
+    if(!_auth) return;
+
     if (!server->authenticate("admin", "admin"))
     {
         return server->requestAuthentication(HTTPAuthMethod::BASIC_AUTH);
@@ -186,6 +187,7 @@ void WiFiMind::handleRequest()
 void WiFiMind::handleInfo()
 {
     handleRequest();
+    server->send(200, JSONTYPE, "{\"ha\":\"ha\"}");
 }
 
 void WiFiMind::handleWifi()
@@ -793,6 +795,17 @@ void WiFiMind::setCountry(String cc)
 void WiFiMind::setAllowExit(bool allow)
 {
     _allowExit = allow;
+}
+
+void WiFiMind::setAllowBasicAuth(bool allow)
+{
+    _auth = allow;
+}
+
+void WiFiMind::setBasicAuth(String username, String password)
+{
+    _authUsername = String(username);
+    _authPassword = String(password);
 }
 
 String WiFiMind::encryptionTypeStr(uint8_t authmode)

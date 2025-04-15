@@ -153,6 +153,10 @@ public:
     // set allow exit config portal
     void setAllowExit(bool allow);
 
+    // set basic auth
+    void setAllowBasicAuth(bool allow);
+    void setBasicAuth(String username, String password);
+
     // check if config portal is active (true)
     bool getConfigPortalActive();
 
@@ -217,6 +221,9 @@ private:
     uint16_t _httpPort = 80;     // port for webserver
     uint8_t _connectRetries = 1; // number of sta connect retries, force reconnect, wait loop (connectimeout) does not always work and first disconnect bails
     bool _allowExit = true;      // allow exit in nonblocking, else user exit/abort calls will be ignored including cptimeout
+    bool _auth = false;          // basic auth
+    String _authUsername = "admin";
+    String _authPassword = "admin";
 
 #ifdef ESP32
     wifi_event_id_t wm_event_id = 0;
